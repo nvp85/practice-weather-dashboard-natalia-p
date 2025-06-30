@@ -20,13 +20,18 @@ public class WeatherApiApplication {
 		System.out.println("Welcome to the weather app!");
 		System.out.print("Enter a city name: ");
 		String city = scanner.nextLine();
+
 		String jsonResponse = restTemplate.getForObject(url, String.class, city);
-		//System.out.println(jsonResponse);
 
 		// Display temperature, description, and humidity
 		ObjectMapper mapper = new ObjectMapper();
 		try {
 			JsonNode rootNode = mapper.readTree(jsonResponse);
+			if (rootNode.path("cod").asInt() != 200) {
+				System.out.println("Sorry, something went wrong.");
+				System.out.println(rootNode.path("message").asText());
+				return;
+			}
 			JsonNode weatherArr = rootNode.path("weather");
 			JsonNode description = weatherArr.get(0).path("description");
 			JsonNode cityName = rootNode.path("name");
