@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Scanner;
@@ -21,32 +22,17 @@ public class WeatherApiApplication {
 		System.out.print("Enter a city name: ");
 		String city = scanner.nextLine();
 
-		String jsonResponse = restTemplate.getForObject(url, String.class, city);
-
 		// Display temperature, description, and humidity
-		ObjectMapper mapper = new ObjectMapper();
 		try {
-			JsonNode rootNode = mapper.readTree(jsonResponse);
-			if (rootNode.path("cod").asInt() != 200) {
-				System.out.println("Sorry, something went wrong.");
-				System.out.println(rootNode.path("message").asText());
-				return;
-			}
-			JsonNode weatherArr = rootNode.path("weather");
-			JsonNode description = weatherArr.get(0).path("description");
-			JsonNode cityName = rootNode.path("name");
-			JsonNode temperature = rootNode.path("main").path("temp");
-			JsonNode humidity = rootNode.path("main").path("humidity");
-
-			System.out.println("City: " + cityName.asText());
-			System.out.println("Description: " + description.asText());
-			System.out.println("Temperature: " + temperature.asInt() + "F");
-			System.out.println("Humidity: " + humidity.asInt() + "%");
-
-		} catch (Exception e) {
-			System.out.println("JSON parsing error.");
+			WeatherApiResponse response = restTemplate.getForObject(url, WeatherApiResponse.class, city);
+			System.out.println("City: " + response.getName());
+			System.out.println("Description: " + response.getWeather().getFirst().getDescription());
+			System.out.println("Temperature: " + response.getMain().getTemp() + "F");
+			System.out.println("Feels like: " + response.getMain().getFeels_like() + "F");
+			System.out.println("Humidity: " + response.getMain().getHumidity() + "%");
+		} catch (HttpClientErrorException e) {
+			System.out.println("Error: " + e.getMessage());
 		}
 
 	}
-
 }
